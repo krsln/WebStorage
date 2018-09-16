@@ -2,7 +2,9 @@
 to Local,   Session,   Cookie store some data :p
 
 using...
-    console.log(WebStorage.Set(StorageType.Local, 'TestLocal', 'Test Local Value'));
+
+
+    console.log(WebStorage.Set(StorageType.Local, 'TestLocal', {abc:'Test Local Value'}));
     WebStorage.Remove(StorageType.Local, 'TestLocal');
 
     console.log(WebStorage.Set(StorageType.Session, 'TestSession', 'Test Session Value'));
