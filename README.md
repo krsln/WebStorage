@@ -1,5 +1,6 @@
 # WebStorage
-to Local,   Session,   Cookie store some data :p
+tested on angular 6.1.7
+to store some data || Local, Session, Cookie 
 
 using...
 
