@@ -10,10 +10,7 @@ export class WebStorage {
    window.localStorage - stores data with no expiration date
    window.sessionStorage - stores data for one session (data is lost when the browser tab is closed)
 
-
-    sessionStorage.removeItem('key'); // Remove saved data from sessionStorage
     sessionStorage.clear(); // Remove all saved data from sessionStorage
-
    */
   static Set(storageType: StorageType, key: string, obj: any, expMin: number = 60): any {
     // In your login logic or whatever
@@ -36,25 +33,18 @@ export class WebStorage {
   }
 
   static Get(storageType: StorageType, key: string): any {
+    let data = null;
     if (storageType === StorageType.Local) {
-      const data = localStorage.getItem(key);
-      if (data !== 'undefined' && data !== undefined && data !== null) {
-        return this.CheckData(storageType, key, data);
-      }
-      return null;
+      data = localStorage.getItem(key);
     } else if (storageType === StorageType.Session) {
-      const data = sessionStorage.getItem(key);
-      if (data !== 'undefined' && data !== undefined && data !== null) {
-        return this.CheckData(storageType, key, data);
-      }
-      return null;
+      data = sessionStorage.getItem(key);
     } else if (storageType === StorageType.Cookie) {
-      const data = CookieMonster.Get(key);
-      if (data !== 'undefined' && data !== undefined && data !== null) {
-        return this.CheckData(storageType, key, data);
-      }
-      return null;
+      data = CookieMonster.Get(key);
     }
+    if (data !== 'undefined' && data !== undefined && data !== null) {
+      return this.CheckData(storageType, key, data);
+    }
+    return null;
   }
 
   static Remove(storageType: StorageType, key: string) {
@@ -74,10 +64,8 @@ export class WebStorage {
     const sessionObject = JSON.parse(obj);
     // console.log(key, sessionObject, new Date(sessionObject.ExpiresAt));
     if (Date.parse(new Date().toString()) < sessionObject.ExpiresAt) {
-      // normal application behaviour => session is not expired
       return sessionObject.Data;
     } else {
-      // remove the sessionStorage because it will be set again by previous logic
       this.Remove(storageType, key);
       return null;
     }
