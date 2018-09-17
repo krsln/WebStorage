@@ -10,10 +10,9 @@ export class WebStorage {
    window.localStorage - stores data with no expiration date
    window.sessionStorage - stores data for one session (data is lost when the browser tab is closed)
 
-    sessionStorage.clear(); // Remove all saved data from sessionStorage
+   sessionStorage.clear(); // Remove all saved data from sessionStorage
    */
   static Set(storageType: StorageType, key: string, obj: any, expMin: number = 60): any {
-    // In your login logic or whatever
     // const expires = new Date(year, month, day, hours, minutes, seconds, milliseconds);
     const expires = new Date();
     expires.setMinutes(expires.getMinutes() + expMin);
@@ -41,6 +40,7 @@ export class WebStorage {
     } else if (storageType === StorageType.Cookie) {
       data = CookieMonster.Get(key);
     }
+
     if (data !== 'undefined' && data !== undefined && data !== null) {
       return this.CheckData(storageType, key, data);
     }
@@ -84,7 +84,7 @@ export class CookieMonster {
     if (data) {
       return data.substring(cookieName.length, data.length);
     } else {
-      return '';
+      return null;
     }
   }
 
@@ -100,6 +100,7 @@ export class CookieMonster {
   static SetCookie(name: string, value: string, expireDays: number, path: string = '') {
     const d: Date = new Date();
     d.setTime(d.getTime() + expireDays * 24 * 60 * 60 * 1000);
+    // console.log(d);
     const expires: string = 'expires=' + d.toUTCString();
     document.cookie = name + '=' + value + '; ' + expires + (path.length > 0 ? '; path=' + path : '');
   }
