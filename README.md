@@ -1,5 +1,6 @@
 # WebStorage
-tested on angular 6.1.7
+tested on angular 6.* - 9.*
+
 to store some data || Local, Session, Cookie 
 
 using...
