@@ -1,45 +1,57 @@
-export class WebStorage {
-  /*
-   window.localStorage - stores data with no expiration date
-   window.sessionStorage - stores data for one session (data is lost when the browser tab is closed)
-   sessionStorage.clear(); // Remove all saved data from sessionStorage
-   */
+import {Inject, Injectable, PLATFORM_ID} from '@angular/core';
+import {DOCUMENT, isPlatformBrowser, isPlatformServer} from '@angular/common';
 
-  static Set(storageType: StorageType, key: string, obj: any, expMin: number = 60): any {
+@Injectable({providedIn: 'root'})
+export class WebStorage {
+
+  constructor(@Inject(DOCUMENT) private document: Document,
+              @Inject(PLATFORM_ID) private platformId: any,
+  ) {
+    // console.log('isPlatformBrowser', isPlatformBrowser(this.platformId), this.document);
+  }
+
+  Set(storageType: StorageType, key: string, obj: any, expMin: number = 60): any {
     // const expires = new Date(year, month, day, hours, minutes, seconds, milliseconds);
     const expires = new Date();
     expires.setMinutes(expires.getMinutes() + expMin);
     const data = {ExpiresAt: Date.parse(expires.toString()), Data: obj};
+    // console.log('Set isPlatformBrowser', isPlatformBrowser(this.platformId), this.document);
 
-    switch (storageType) {
-      case StorageType.Cookie:
-        const expireCookie: string = 'expires=' + new Date(data.ExpiresAt).toUTCString();
-        this.SetCookie(key, JSON.stringify(data), expireCookie, '/');
-        break;
-      case StorageType.Local:
-        localStorage.setItem(key, JSON.stringify(data));
-        break;
-      case StorageType.Session:
-        sessionStorage.setItem(key, JSON.stringify(data));
-        break;
+    if (isPlatformBrowser(this.platformId)) {
+      switch (storageType) {
+        case StorageType.Cookie:
+          const expireCookie: string = 'expires=' + new Date(data.ExpiresAt).toUTCString();
+          this.SetCookie(key, JSON.stringify(data), expireCookie, '/');
+          break;
+        case StorageType.Local:
+          localStorage.setItem(key, JSON.stringify(data));
+          break;
+        case StorageType.Session:
+          sessionStorage.setItem(key, JSON.stringify(data));
+          break;
+      }
     }
 
     return this.Get(storageType, key);
   }
 
-  static Get(storageType: StorageType, key: string): any {
+  Get(storageType: StorageType, key: string): any {
+    // console.log('Get isPlatformBrowser', isPlatformBrowser(this.platformId), this.document);
     let data = null;
-    switch (storageType) {
-      case StorageType.Cookie:
-        data = this.GetCookie(key);
-        break;
-      case StorageType.Local:
-        data = localStorage.getItem(key);
-        break;
-      case StorageType.Session:
-        data = sessionStorage.getItem(key);
-        break;
+    if (isPlatformBrowser(this.platformId)) {
+      switch (storageType) {
+        case StorageType.Cookie:
+          data = this.GetCookie(key);
+          break;
+        case StorageType.Local:
+          data = window.localStorage.getItem(key);
+          break;
+        case StorageType.Session:
+          data = window.sessionStorage.getItem(key);
+          break;
+      }
     }
+    // console.log('Get', data);
 
     if (data !== 'undefined' && data !== undefined && data !== null) {
       return this.CheckData(storageType, key, data);
@@ -47,18 +59,18 @@ export class WebStorage {
     return null;
   }
 
-  static Remove(storageType: StorageType, key: string) {
+  Remove(storageType: StorageType, key: string) {
     switch (storageType) {
       case StorageType.Cookie:
         this.RemoveCookie(key, '/');
         console.log(key, ' Cookie expired');
         break;
       case StorageType.Local:
-        localStorage.removeItem(key);
+        window.localStorage.removeItem(key);
         console.log(key, 'localStorage expired');
         break;
       case StorageType.Session:
-        sessionStorage.removeItem(key);
+        window.sessionStorage.removeItem(key);
         console.log(key, 'session expired');
         break;
     }
@@ -66,8 +78,8 @@ export class WebStorage {
 
   //#region Cookie
 
-  private static GetCookie(key: string) {
-    const cookies: Array<string> = document.cookie.split(';');
+  private GetCookie(key: string) {
+    const cookies: Array<string> = this.document.cookie.split(';');
     const cookieName = `${key}=`;
 
     let data = cookies.map(x => x.replace(/^\s+/g, ''))
@@ -77,22 +89,26 @@ export class WebStorage {
     return data;
   }
 
-  private static SetCookie(key: string, data: string, expireCookie: string, path: string = '/') {
-    document.cookie = key + '=' + data + '; ' + expireCookie + (path.length > 0 ? '; path=' + path : '');
+  private SetCookie(key: string, data: string, expireCookie: string, path: string = '/') {
+    if (isPlatformBrowser(this.platformId)) {
+      this.document.cookie = key + '=' + data + '; ' + expireCookie + (path.length > 0 ? '; path=' + path : '');
+    }
   }
 
-  private static RemoveCookie(key: string, path: string = '/') {
+  private RemoveCookie(key: string, path: string = '/') {
     const d: Date = new Date();
     d.setTime(d.getTime() + -1 * 24 * 60 * 60 * 1000);
     // console.log(d);
     const data = '';
     const expireCookie: string = 'expires=' + d.toUTCString();
-    document.cookie = key + '=' + data + '; ' + expireCookie + (path.length > 0 ? '; path=' + path : '');
+    if (isPlatformBrowser(this.platformId)) {
+      this.document.cookie = key + '=' + data + '; ' + expireCookie + (path.length > 0 ? '; path=' + path : '');
+    }
   }
 
   //#endregion
 
-  private static CheckData(storageType: StorageType, key: string, obj: any) {
+  private CheckData(storageType: StorageType, key: string, obj: any) {
     const sessionObject = JSON.parse(obj);
     // console.log(key, sessionObject, new Date(sessionObject.ExpiresAt));
     if (Date.parse(new Date().toString()) < sessionObject.ExpiresAt) {
@@ -102,6 +118,7 @@ export class WebStorage {
       return null;
     }
   }
+
 }
 
 export enum StorageType {
@@ -110,3 +127,13 @@ export enum StorageType {
   Cookie
 }
 
+/* Usage
+    constructor(private webStorage: WebStorage) {}
+
+    webStorage.Set(StorageType.Local, 'Auth', response.Customer, 60);
+    this.Customer = webStorage.Get(StorageType.Local, 'Auth');
+
+    window.localStorage - stores data with no expiration date
+    window.sessionStorage - stores data for one session (data is lost when the browser tab is closed)
+    sessionStorage.clear(); // Remove all saved data from sessionStorage
+*/
